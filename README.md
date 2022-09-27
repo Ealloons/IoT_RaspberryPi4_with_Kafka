@@ -27,3 +27,6 @@
    - sys
    - base64
    - dateutil.relativedelta
+
+## 참고 사항
+https://ealloons.github.io/third/ 에 코드 해석이 있습니다.
