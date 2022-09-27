@@ -123,6 +123,8 @@ class MyWindow(QWidget):
         # 새로운 테이블과 그래프를 그린다
         self.get_data_by_datetime(new_table=True)     
     def get_data_by_datetime(self,new_table=False,marker_list=[]):
+        print("button clicked")
+        print(marker_list)
         temp_pd = self.current_data_by_date
         # data_table 에 data 띄우기
         if new_table:
@@ -131,18 +133,16 @@ class MyWindow(QWidget):
         self.fig.clf()
         ax = self.fig.add_subplot(111)
         ax.plot(temp_pd['datetime'],temp_pd['temp'])
-        ax.invert_yaxis()
         ax.set_title("Temperature")
-        #ax.legend()
         #marker_list 가 있을때만 마커 찍기
         if marker_list:
-            for i,v in enumerate(temp_pd['datetime']):
-                if i in marker_list:
+            for v in temp_pd.index:
+                if v in marker_list:
                     # marker 찍을때 사진도 띄우기
-                    self.get_photo_by_datetime(temp_pd['m_id'][i],temp_pd['datetime'][i])
-                    height = temp_pd['temp'][i]
+                    self.get_photo_by_datetime(temp_pd.loc[v]['m_id'],temp_pd.loc[v]['datetime'])
+                    height = temp_pd.loc[v]['temp']
                     #ax.text(v, height, str(v) + " ~ Value : " +str(height))
-                    ax.text(v, height, "V")
+                    ax.text(temp_pd.loc[v]['datetime'], height, "V")
         self.canvas.draw()
     def create_table_widget(self, widget, df):
         widget.setRowCount(len(df.index))
@@ -163,13 +163,7 @@ class MyWindow(QWidget):
                 widget.setItem(row_index, col_index, item)
         widget.resizeRowsToContents()
         #각 생성한 버튼에 동작을 추가한다.
-        self.connection_signal_to_a_button(self.chbox_list,0)
-    def connection_signal_to_a_button(self,list,i):
-        if list:
-            list[0].clicked.connect(lambda _: self.get_data_by_datetime(marker_list=[i]))
-            self.connection_signal_to_a_button(list[1:],i+1)
-        else:
-            return 0
+        mymap(lambda x,y: x.clicked.connect(lambda _: self.get_data_by_datetime(marker_list=[int(y)])),self.chbox_list,df.index)
     def get_photo_by_datetime(self,m_id,s_datetime):       
         s_datetime = s_datetime.to_pydatetime()
         e_datetime = s_datetime + relativedelta(minutes=50)
@@ -186,8 +180,13 @@ class MyWindow(QWidget):
         qImg = QtGui.QImage(img.data, w, h, w*c, QtGui.QImage.Format_RGB888)
         pixmap = QtGui.QPixmap.fromImage(qImg)
         self.lbl_img.setPixmap(pixmap)
-
-            
+    
+def mymap(f,seq1,seq2):
+        result = ()
+        for a,b in zip(seq1,seq2):
+            result += (f(a,b),)
+        return result
+     
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MyWindow()
